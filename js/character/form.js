@@ -14,6 +14,7 @@ function ensureCharShape(charObj, fallbackName = '未命名角色') {
     const safeChar = (charObj && typeof charObj === 'object') ? charObj : {};
     if (!safeChar.data || typeof safeChar.data !== 'object') safeChar.data = {};
     if (!safeChar.aiCache || typeof safeChar.aiCache !== 'object') safeChar.aiCache = {};
+    if (!safeChar.aiInput || typeof safeChar.aiInput !== 'object') safeChar.aiInput = {};
     if (!safeChar.name) safeChar.name = fallbackName;
     return safeChar;
 }
@@ -102,6 +103,7 @@ function newCharacter() {
     setCurrentId(id);
     renderCharSelect(chars, id);
     clearFormFields();
+    if (typeof applyCharAiInput === 'function') applyCharAiInput(null);
     scheduleCloudConfigSync();
     showToast('✨ 已新建角色：' + name);
 }
@@ -353,6 +355,7 @@ function saveCurrentCharData(id) {
     if (!chars[id]) return;
     chars[id] = ensureCharShape(chars[id], chars[id]?.name || '未命名角色');
     chars[id].data = serializeForm();
+    if (typeof collectAiUiState === 'function') chars[id].aiInput = collectAiUiState();
     saveChars(chars);
 }
 
@@ -364,6 +367,7 @@ function loadCharacter(id) {
     }
     const charData = chars[id]?.data || {};
     deserializeForm(charData);
+    if (typeof applyCharAiInput === 'function') applyCharAiInput(chars[id]?.aiInput);
     if (typeof refreshAiCacheDisplay === 'function') refreshAiCacheDisplay();
     setSaveStatus('saved');
 }

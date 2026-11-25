@@ -41,6 +41,7 @@ function collectAiUiState() {
     });
     moduleGuides.opening_scene = getVal('guide_opening_scene', '');
     moduleGuides.about_me = getVal('guide_about_me', '');
+    moduleGuides.status_style = getVal('guide_status_style', '');
 
     const instructionDrafts = {
         [AI_SUBTAB_PERSONA_CARD]: getVal('aiInstructionsChar', AppState.aiInstructionDrafts?.[AI_SUBTAB_PERSONA_CARD] || AI_PERSONA_CARD_INSTRUCTIONS_DEFAULT),
@@ -171,6 +172,41 @@ function applyAiUiState(state) {
     if (insOpeningEl) insOpeningEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_OPENING] || AI_OPENING_INSTRUCTIONS_DEFAULT;
     const insStatusEl = document.getElementById('aiInstructionsStatus');
     if (insStatusEl) insStatusEl.value = AppState.aiInstructionDrafts[AI_SUBTAB_FRONTEND_DECOR] || AI_STATUS_INSTRUCTIONS_DEFAULT;
+}
+
+// ============================================================
+//  AI 输入随角色保存（XP_core / 开场白 / 引导词等用户输入）
+// ============================================================
+function captureAiInputDefaults() {
+    AppState.aiInputDefaults = collectAiUiState();
+}
+
+function applyCharAiInput(aiInput) {
+    const state = (aiInput && typeof aiInput === 'object' && Object.keys(aiInput).length > 0)
+        ? aiInput
+        : (AppState.aiInputDefaults || {});
+    applyAiUiState(state);
+}
+
+function applyCurrentCharAiInput() {
+    const charObj = (typeof getCurrentCharObject === 'function') ? getCurrentCharObject() : null;
+    applyCharAiInput(charObj ? charObj.aiInput : null);
+}
+
+function migrateAiInputToCurrentChar() {
+    const currentId = (typeof getCurrentId === 'function') ? getCurrentId() : null;
+    if (!currentId) return;
+    const chars = (typeof getChars === 'function') ? getChars() : {};
+    if (!chars[currentId]) return;
+    const charObj = ensureCharShape(chars[currentId], chars[currentId]?.name || '未命名角色');
+    if (!charObj.aiInput || Object.keys(charObj.aiInput).length === 0) {
+        const globalState = getAiUiState();
+        if (globalState && typeof globalState === 'object' && Object.keys(globalState).length > 0) {
+            charObj.aiInput = globalState;
+            chars[currentId] = charObj;
+            saveChars(chars);
+        }
+    }
 }
 
 function migrateOldAiConfig() {

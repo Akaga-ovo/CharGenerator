@@ -5,6 +5,8 @@ document.getElementById('previewModal').addEventListener('click', e => { if (e.t
 document.getElementById('importModal').addEventListener('click', e => { if (e.target.id === 'importModal') closeImportModal(); });
 document.getElementById('namerImportModal').addEventListener('click', e => { if (e.target.id === 'namerImportModal') closeNamerImport(); });
 
+if (typeof captureAiInputDefaults === 'function') captureAiInputDefaults();
+if (typeof migrateAiInputToCurrentChar === 'function') migrateAiInputToCurrentChar();
 bindTabEvents();
 bindCharacterFormAutoSave();
 initCharSystem();
@@ -16,3 +18,4 @@ initProviderSystem();
 bindModuleCheckboxes();
 bindAiSubTabEvents();
 initCloudSync();
+if (typeof applyCurrentCharAiInput === 'function') applyCurrentCharAiInput();
