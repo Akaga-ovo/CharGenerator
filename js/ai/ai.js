@@ -1702,3 +1702,62 @@ function fillFormFromAI() {
     if (basicBtn) basicBtn.classList.add('active');
     if (basicTab) basicTab.classList.add('active');
 }
+
+// 反向：根据开场白反推人设卡
+async function reverseGenerateFromOpening() {
+    const opening = document.getElementById('reverseOpeningInput')?.value.trim() || '';
+    const baseUrl = document.getElementById('aiBaseUrl')?.value.trim().replace(/\/+$/, '') || '';
+    const apiKey = document.getElementById('aiApiKey')?.value.trim() || '';
+    const statusEl = document.getElementById('reverseGenStatus');
+    const btn = document.getElementById('btnReverseGenerate');
+
+    if (!opening) { showToast('请先粘贴开场白'); return; }
+    if (!baseUrl) { showToast('请先在 AI 辅助区配置 API 地址'); return; }
+    if (!apiKey) { showToast('请先在 AI 辅助区填写 API Key'); return; }
+    if (!AppState.selectedModel) { showToast('请先在 AI 辅助区获取并选择模型'); return; }
+
+    const persona = document.getElementById('aiPersona')?.value.trim() || '';
+    const systemMsg = `<persona>\n${persona}\n</persona>`;
+
+    const personaKeys = ['basic', 'background', 'appearance', 'personality', 'user_relation', 'behavior', 'speech', 'extra', 'nsfw'];
+    const schema = `{\n${personaKeys.map(k => MODULE_JSON_SCHEMA[k]).join(',\n')}\n}`;
+
+    const userMsg = `<OpeningScene>\n${opening}\n</OpeningScene>\n\n<reply_json_schema>\n${schema}\n</reply_json_schema>\n\n<instructions_reverse>\n请阅读上面的开场白，反推出这个角色的完整人设卡。要求：\n1. 严格按照 reply_json_schema 的结构输出完整 JSON，九个模块全部给出，不要遗漏；\n2. 从开场白中提取语气、身份、关系、场景、外貌、性格等线索，推断不出的部分合理补全，确实无法确定的留空字符串或空数组；\n3. 列表字段（数组）尽量给出 2-5 个条目，描述精炼有层次；\n4. 只输出 JSON 本身，不要任何 markdown 标记、标题或解释文字。\n</instructions_reverse>`;
+
+    if (statusEl) statusEl.textContent = '⏳ 反推中，请稍候…';
+    if (btn) btn.disabled = true;
+
+    try {
+        const rawReplyEl = document.getElementById('aiRawReplyContent') || document.createElement('div');
+        const raw = await generateNonStream(baseUrl, apiKey, systemMsg, userMsg, [], rawReplyEl);
+        if (!raw || !raw.trim()) {
+            if (statusEl) statusEl.textContent = '';
+            showToast('⚠️ 未收到任何内容');
+            return;
+        }
+        const parsed = extractJsonFromText(raw);
+        if (parsed) {
+            AppState.aiLastJson = parsed;
+            AppState.aiActiveSubtab = AI_SUBTAB_PERSONA_CARD;
+            if (statusEl) statusEl.textContent = '✅ 反推成功';
+            fillFormFromAI();
+        } else {
+            if (statusEl) statusEl.textContent = '';
+            showToast('⚠️ 无法解析 JSON，原始回复已放到 AI 辅助区，可手动复制修正');
+            document.querySelectorAll('.top-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.top-tab-content').forEach(p => p.classList.remove('active'));
+            const aiBtn = document.querySelector('.top-tab-btn[data-tab="ai"]');
+            const aiPanel = document.getElementById('tab-ai');
+            if (aiBtn) aiBtn.classList.add('active');
+            if (aiPanel) aiPanel.classList.add('active');
+            const rawSection = document.getElementById('aiRawReplySection');
+            if (rawSection) rawSection.style.display = '';
+        }
+    } catch (err) {
+        console.error('[Reverse Gen Error]', err);
+        if (statusEl) statusEl.textContent = '';
+        showToast(`❌ 出错：${err.message}`);
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
