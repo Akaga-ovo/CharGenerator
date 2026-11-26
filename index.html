@@ -92,6 +92,19 @@
                 <button class="tab-btn" data-tab="nsfw">🔞 NSFW</button>
             </div>
 
+            <!-- 反向生成：根据开场白反推人设卡 -->
+            <div class="card-section" id="reverseGenSection" style="margin-bottom:16px;">
+                <div class="section-header">
+                    <div class="section-icon">🔁</div>
+                    <h2>根据开场白反推人设卡</h2>
+                </div>
+                <textarea id="reverseOpeningInput" rows="5" placeholder="粘贴一段开场白，AI 会反推出角色的人设卡并填入下方表单…" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border-color);border-radius:8px;font-size:0.9rem;line-height:1.6;resize:vertical;font-family:inherit;"></textarea>
+                <div style="display:flex;align-items:center;gap:12px;margin-top:10px;">
+                    <button type="button" class="btn-ai-generate" id="btnReverseGenerate" onclick="reverseGenerateFromOpening()" style="padding:10px 24px;font-size:0.9rem;">✨ 开始反推</button>
+                    <span class="ai-status-text" id="reverseGenStatus">需先在 AI 辅助区配置好 API 与模型</span>
+                </div>
+            </div>
+
             <!-- 基础信息 -->
             <div class="tab-content active" id="tab-basic">
                 <div class="card-section">
