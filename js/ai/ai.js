@@ -593,7 +593,8 @@ function buildOpeningPreview() {
     const userPortrayalBlock = buildOpeningUserPortrayalBlock();
     const charCardBlock = buildCharCardYamlForAi();
     const worldbookBlock = buildWorldbookJsonForAi();
-    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions_opening>\n${instructions}\n</instructions_opening>`;
+    const openingBlock = buildOpeningForAi();
+    return `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}${openingBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions_opening>\n${instructions}\n</instructions_opening>`;
 }
 
 function buildAiMessages() {
@@ -633,7 +634,8 @@ function buildAiMessages() {
         const userPortrayalBlock = buildOpeningUserPortrayalBlock();
         const charCardBlock = buildCharCardYamlForAi();
         const worldbookBlock = buildWorldbookJsonForAi();
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions_opening>\n${instructions}\n</instructions_opening>`;
+        const openingBlock = buildOpeningForAi();
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}${openingBlock}${pronounsBlock}${userPortrayalBlock}<OpeningScene>\n现在，我需要你为这个角色创作故事的开场白：\n${openingScene}\n</OpeningScene>\n\n<WordCount>\n${wordCount}\n</WordCount>\n\n<instructions_opening>\n${instructions}\n</instructions_opening>`;
     } else if (isUserPersonaMode()) {
         const guideTexts = modules.map(m => {
             const guideEl = document.getElementById('guide_' + m);
@@ -643,12 +645,14 @@ function buildAiMessages() {
 
         const charCardBlock = buildCharCardYamlForAi();
         const worldbookBlock = buildWorldbookJsonForAi();
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}<about_me>\n${aboutMe}\n</about_me>\n\n<requested_modules>\n${modules.join('、')}\n</requested_modules>\n\n<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<instructiongs_user>\n${instructions}\n</instructiongs_user>`;
+        const openingBlock = buildOpeningForAi();
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}${openingBlock}<about_me>\n${aboutMe}\n</about_me>\n\n<requested_modules>\n${modules.join('、')}\n</requested_modules>\n\n<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<instructiongs_user>\n${instructions}\n</instructiongs_user>`;
     } else if (isFrontendDecorMode()) {
         const charCardBlock = buildCharCardYamlForAi();
         const worldbookBlock = buildWorldbookJsonForAi();
+        const openingBlock = buildOpeningForAi();
         const statusStyle = document.getElementById('guide_status_style')?.value.trim() || '';
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}<status_style>\n${statusStyle}\n</status_style>\n\n<instructions_status>\n${instructions}\n</instructions_status>`;
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n${charCardBlock}${worldbookBlock}${openingBlock}<status_style>\n${statusStyle}\n</status_style>\n\n<instructions_status>\n${instructions}\n</instructions_status>`;
     } else {
         const moduleNames = modules.map(m => MODULE_LABELS[m] || m).join('、');
         const guideTexts = modules.map(m => {
@@ -687,11 +691,12 @@ function buildAiMessages() {
         // 人设卡 YAML / 世界书 JSON 作为参考内容，由两个独立复选框控制
         const charCardBlock = buildCharCardYamlForAi();
         const worldbookBlock = buildWorldbookJsonForAi();
+        const openingBlock = buildOpeningForAi();
 
         // 起名参考只用于人设卡子标签
         const namingRef = (activeTab === AI_SUBTAB_WORLDVIEW) ? '' : buildNamerPoolBlock();
         const instructionsTag = (activeTab === AI_SUBTAB_WORLDVIEW) ? 'instructions_worldinfo' : 'instructions_char';
-        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<requested_modules>\n${moduleNames}\n</requested_modules>\n\n${namingRef}${charCardBlock}${worldbookBlock}<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<reply_json_schema>\n{\n${selectedSchema.join(',\n')}\n}\n</reply_json_schema>\n\n<${instructionsTag}>\n${dynamicInstructions}\n</${instructionsTag}>`;
+        userMsg = `${tropeBlock}<XP_core>\n${xpCore}\n</XP_core>\n\n<requested_modules>\n${moduleNames}\n</requested_modules>\n\n${namingRef}${charCardBlock}${worldbookBlock}${openingBlock}<module_guides>\n${guideTexts.join('\n\n')}\n</module_guides>\n\n<reply_json_schema>\n{\n${selectedSchema.join(',\n')}\n}\n</reply_json_schema>\n\n<${instructionsTag}>\n${dynamicInstructions}\n</${instructionsTag}>`;
     }
 
     return { systemMsg, userMsg, modules };
@@ -842,6 +847,16 @@ function buildWorldbookJsonForAi() {
         ? `<worldbook_json>\n以下是当前世界书内容的 JSON，请参考其中的世界观设定和剧情语境，但不要整段抄录：\n${worldbookJson}\n</worldbook_json>\n\n`
         : '';
     return standardBlock + buildUserDefinedWorldbookForAi();
+}
+
+// 根据复选框状态构建「开场白」参考块
+function buildOpeningForAi() {
+    const sendOpening = !!document.getElementById('sendOpeningToAi')?.checked;
+    if (!sendOpening) return '';
+    const cache = typeof getCurrentCharAiCache === 'function' ? getCurrentCharAiCache(AI_SUBTAB_OPENING) : null;
+    const opening = normalizeAiCacheEntry(cache, AI_SUBTAB_OPENING)?.raw?.trim() || '';
+    if (!opening) return '';
+    return `<opening_scene>\n以下是这个角色当前的开场白正文，请参考其中的剧情起点、人物关系与氛围，避免生成的内容与之冲突：\n${opening}\n</opening_scene>\n\n`;
 }
 
 function updateModulePreview() { updatePromptPreview(); }
@@ -1701,63 +1716,4 @@ function fillFormFromAI() {
     const basicTab = document.getElementById('tab-basic');
     if (basicBtn) basicBtn.classList.add('active');
     if (basicTab) basicTab.classList.add('active');
-}
-
-// 反向：根据开场白反推人设卡
-async function reverseGenerateFromOpening() {
-    const opening = document.getElementById('reverseOpeningInput')?.value.trim() || '';
-    const baseUrl = document.getElementById('aiBaseUrl')?.value.trim().replace(/\/+$/, '') || '';
-    const apiKey = document.getElementById('aiApiKey')?.value.trim() || '';
-    const statusEl = document.getElementById('reverseGenStatus');
-    const btn = document.getElementById('btnReverseGenerate');
-
-    if (!opening) { showToast('请先粘贴开场白'); return; }
-    if (!baseUrl) { showToast('请先在 AI 辅助区配置 API 地址'); return; }
-    if (!apiKey) { showToast('请先在 AI 辅助区填写 API Key'); return; }
-    if (!AppState.selectedModel) { showToast('请先在 AI 辅助区获取并选择模型'); return; }
-
-    const persona = document.getElementById('aiPersona')?.value.trim() || '';
-    const systemMsg = `<persona>\n${persona}\n</persona>`;
-
-    const personaKeys = ['basic', 'background', 'appearance', 'personality', 'user_relation', 'behavior', 'speech', 'extra', 'nsfw'];
-    const schema = `{\n${personaKeys.map(k => MODULE_JSON_SCHEMA[k]).join(',\n')}\n}`;
-
-    const userMsg = `<OpeningScene>\n${opening}\n</OpeningScene>\n\n<reply_json_schema>\n${schema}\n</reply_json_schema>\n\n<instructions_reverse>\n请阅读上面的开场白，反推出这个角色的完整人设卡。要求：\n1. 严格按照 reply_json_schema 的结构输出完整 JSON，九个模块全部给出，不要遗漏；\n2. 从开场白中提取语气、身份、关系、场景、外貌、性格等线索，推断不出的部分合理补全，确实无法确定的留空字符串或空数组；\n3. 列表字段（数组）尽量给出 2-5 个条目，描述精炼有层次；\n4. 只输出 JSON 本身，不要任何 markdown 标记、标题或解释文字。\n</instructions_reverse>`;
-
-    if (statusEl) statusEl.textContent = '⏳ 反推中，请稍候…';
-    if (btn) btn.disabled = true;
-
-    try {
-        const rawReplyEl = document.getElementById('aiRawReplyContent') || document.createElement('div');
-        const raw = await generateNonStream(baseUrl, apiKey, systemMsg, userMsg, [], rawReplyEl);
-        if (!raw || !raw.trim()) {
-            if (statusEl) statusEl.textContent = '';
-            showToast('⚠️ 未收到任何内容');
-            return;
-        }
-        const parsed = extractJsonFromText(raw);
-        if (parsed) {
-            AppState.aiLastJson = parsed;
-            AppState.aiActiveSubtab = AI_SUBTAB_PERSONA_CARD;
-            if (statusEl) statusEl.textContent = '✅ 反推成功';
-            fillFormFromAI();
-        } else {
-            if (statusEl) statusEl.textContent = '';
-            showToast('⚠️ 无法解析 JSON，原始回复已放到 AI 辅助区，可手动复制修正');
-            document.querySelectorAll('.top-tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.top-tab-content').forEach(p => p.classList.remove('active'));
-            const aiBtn = document.querySelector('.top-tab-btn[data-tab="ai"]');
-            const aiPanel = document.getElementById('tab-ai');
-            if (aiBtn) aiBtn.classList.add('active');
-            if (aiPanel) aiPanel.classList.add('active');
-            const rawSection = document.getElementById('aiRawReplySection');
-            if (rawSection) rawSection.style.display = '';
-        }
-    } catch (err) {
-        console.error('[Reverse Gen Error]', err);
-        if (statusEl) statusEl.textContent = '';
-        showToast(`❌ 出错：${err.message}`);
-    } finally {
-        if (btn) btn.disabled = false;
-    }
 }
